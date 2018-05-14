@@ -1,0 +1,52 @@
+version: "3.1"
+services:
+  web:
+    container_name: yii2-skeleton-httpd
+    image: nginx:latest
+    ports:
+      - "32782:80"
+    volumes:
+      - ./docker/nginx/nginx.template:/etc/nginx/conf.d/nginx.template
+      - ./docker/create_conf.sh:/tmp/create_conf.sh
+      - ./:/app:rw
+    env_file:
+      - .env
+    command: "/bin/bash /tmp/create_conf.sh"
+    depends_on:
+      - app
+    networks:
+      - yii2-skeleton-network
+
+  app:
+    container_name: yii2-skeleton-app
+    build:
+      context: ./docker/php-fpm
+      args:
+        XDEBUG_ENABLE: 1
+    volumes:
+      - ./:/app:rw
+    env_file:
+      - .env
+    working_dir: /app
+    depends_on:
+      - db
+    networks:
+      - yii2-skeleton-network
+
+  db:
+    container_name: yii2-skeleton-db
+    image: mysql:5.7
+    restart: always
+    volumes:
+      - ./docker/db/db_data:/var/lib/mysql
+    ports:
+      - "3306"
+    env_file:
+      - .env
+    networks:
+      - yii2-skeleton-network
+
+networks:
+  yii2-skeleton-network:
+    external:
+      name: yii2-skeleton-network
